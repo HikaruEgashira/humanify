@@ -8,26 +8,27 @@ import { mapPromisesParallel } from "./run-promises-in-parallel.js";
 
 type Options = {
   apiKey: string;
-  use4k: boolean;
 };
 
-export default ({ apiKey, use4k }: Options) => {
+export default ({ apiKey }: Options) => {
   const client = new OpenAIApi(new Configuration({ apiKey }));
 
   return async (code: string): Promise<string> => {
-    const codeBlocks = await splitCode(code, use4k);
+    const codeBlocks = await splitCode(code);
     let variablesAndFunctionsToRename: Rename[] = [];
     await mapPromisesParallel(10, codeBlocks, async (codeBlock) => {
       const renames = await codeToVariableRenames(codeBlock);
       variablesAndFunctionsToRename =
         variablesAndFunctionsToRename.concat(renames);
     });
+    console.log(variablesAndFunctionsToRename);
+    
     return renameVariablesAndFunctions(code, variablesAndFunctionsToRename);
   };
 
   async function codeToVariableRenames(code: string) {
     const chatCompletion = await client.createChatCompletion({
-      model: use4k ? "gpt-3.5-turbo" : "gpt-3.5-turbo-16k",
+      model: "gpt-4o-mini",
       functions: [
         {
           name: "rename_variables_and_functions",
@@ -69,6 +70,8 @@ export default ({ apiKey, use4k }: Options) => {
       ],
     });
     const data = chatCompletion.data.choices[0];
+    console.log(data);
+    
     if (data.finish_reason !== "function_call") return [];
 
     const {

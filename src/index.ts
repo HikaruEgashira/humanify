@@ -1,3 +1,4 @@
+#!/usr/bin/env tsx
 import fs from "fs/promises";
 import prettier from "./prettier.js";
 import openai from "./openai/openai.js";
@@ -7,7 +8,6 @@ import { ensureFileExists } from "./fs-utils.js";
 import { env } from "./env.js";
 import { nop } from "./plugin-utils.js";
 import fixShadowing from "./fix-shadowing.js";
-import { localReanme } from "./local-rename.js";
 import { webcrack } from "./webcrack.js";
 
 const argv = yargs(process.argv.slice(2))
@@ -29,19 +29,6 @@ const argv = yargs(process.argv.slice(2))
       alias: "openai-key",
       description: "OpenAI key (defaults to OPENAI_TOKEN environment variable)",
     },
-    local: {
-      type: "boolean",
-      alias: "no-openai",
-      default: false,
-      description: "Don't use OpenAI API, only local plugins",
-    },
-    "4k": {
-      type: "boolean",
-      alias: "use-cheaper-model",
-      default: false,
-      description:
-        "Use the cheaper GPT-3.5 model with 4k context window (default is 16k)",
-    },
   })
   .demandCommand(1)
   .help()
@@ -55,15 +42,16 @@ const bundledCode = await fs.readFile(filename, "utf-8");
 
 const PLUGINS = [
   humanify,
-  argv.local
-    ? localReanme()
-    : openai({ apiKey: argv.key ?? env("OPENAI_TOKEN"), use4k: argv["4k"] }),
+  openai({ apiKey: argv.key ?? env("OPENAI_TOKEN") }),
   prettier,
 ];
 
 const extractedFiles = await webcrack(bundledCode, argv.output);
 
 for (const file of extractedFiles) {
+  if (file.path.endsWith("deobfuscated.js")) continue;
+
+  console.log(`deobfuscating: ${file.path}`);
   const code = await fs.readFile(file.path, "utf-8");
   const formattedCode = await PLUGINS.reduce(
     (p, next) => p.then(next),
@@ -71,6 +59,7 @@ for (const file of extractedFiles) {
   );
 
   await fs.writeFile(file.path, formattedCode);
+  console.log(`deobfuscated: ${file.path}`);
 }
 
 process.exit(0); // Kills the zeromq socket

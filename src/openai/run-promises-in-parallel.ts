@@ -4,18 +4,18 @@ export async function mapPromisesParallel<T, U>(
   fn: (item: T, index: number) => Promise<U>
 ): Promise<U[]> {
   const results: U[] = [];
-  const promises: Promise<void>[] = [];
   let index = 0;
-  while (index < items.length) {
-    while (promises.length < numParallel && index < items.length) {
-      promises.push(
-        fn(items[index], index++).then((result) => {
-          results.push(result);
-        })
-      );
+
+  async function worker() {
+    while (index < items.length) {
+      const currentIndex = index++;
+      const result = await fn(items[currentIndex], currentIndex);
+      results.push(result);
     }
-    await Promise.all(promises);
-    promises.length = 0;
   }
+
+  const workers = Array.from({ length: numParallel }, worker);
+  await Promise.all(workers);
+
   return results;
 }
