@@ -1,5 +1,5 @@
 {
-  "name": "@HikaruEgashira/humanify",
+  "name": "@hikae/humanify",
   "version": "1.0.0",
   "description": "",
   "main": "index.js",
@@ -11,7 +11,7 @@
     "start": "tsx src/index.ts"
   },
   "publishConfig": {
-    "registry": "https://npm.pkg.github.com"
+    "access": "public"
   },
   "type": "module",
   "keywords": [],
