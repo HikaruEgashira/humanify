@@ -275,6 +275,10 @@ const argv = yargs(process.argv.slice(2)).example("npm start -o example-formatte
 }).demandCommand(1).help().parseSync();
 const filename = argv._[0];
 await ensureFileExists(filename);
+const stats = await fs.stat(filename);
+if (stats.isDirectory()) {
+  throw new Error(`Expected a file, but got a directory: ${filename}. Please provide a file.`);
+}
 const bundledCode = await fs.readFile(filename, "utf-8");
 const PLUGINS = [humanify, openai({
   apiKey: argv.key ?? env("OPENAI_API_KEY")
