@@ -1,4 +1,4 @@
-import { Configuration, OpenAIApi } from "openai";
+import OpenAI from "openai";
 import { splitCode } from "./split-file.js";
 import {
   Rename,
@@ -11,53 +11,58 @@ type Options = {
 };
 
 export default ({ apiKey }: Options) => {
-  const client = new OpenAIApi(new Configuration({ apiKey }));
+  const client = new OpenAI({ apiKey });
 
   return async (code: string): Promise<string> => {
     const codeBlocks = await splitCode(code);
     let variablesAndFunctionsToRename: Rename[] = [];
     await mapPromisesParallel(10, codeBlocks, async (codeBlock) => {
       const renames = await codeToVariableRenames(codeBlock);
-      variablesAndFunctionsToRename =
-        variablesAndFunctionsToRename.concat(renames);
+      variablesAndFunctionsToRename = variablesAndFunctionsToRename.concat(
+        renames,
+      );
     });
     console.log(variablesAndFunctionsToRename);
-    
+
     return renameVariablesAndFunctions(code, variablesAndFunctionsToRename);
   };
 
   async function codeToVariableRenames(code: string) {
-    const chatCompletion = await client.createChatCompletion({
+    const chatCompletion = await client.chat.completions.create({
       model: "gpt-4o-mini",
-      functions: [
+      tools: [
         {
-          name: "rename_variables_and_functions",
-          description: "Rename variables and function names in Javascript code",
-          parameters: {
-            type: "object",
-            properties: {
-              variablesAndFunctionsToRename: {
-                type: "array",
-                items: {
-                  type: "object",
-                  properties: {
-                    name: {
-                      type: "string",
-                      description:
-                        "The name of the variable or function name to rename",
+          function: {
+            name: "rename_variables_and_functions",
+            description:
+              "Rename variables and function names in Javascript code",
+            parameters: {
+              type: "object",
+              properties: {
+                variablesAndFunctionsToRename: {
+                  type: "array",
+                  items: {
+                    type: "object",
+                    properties: {
+                      name: {
+                        type: "string",
+                        description:
+                          "The name of the variable or function name to rename",
+                      },
+                      newName: {
+                        type: "string",
+                        description:
+                          "The new name of the variable or function name",
+                      },
                     },
-                    newName: {
-                      type: "string",
-                      description:
-                        "The new name of the variable or function name",
-                    },
+                    required: ["name", "newName"],
                   },
-                  required: ["name", "newName"],
                 },
               },
+              required: ["variablesToRename"],
             },
-            required: ["variablesToRename"],
           },
+          type: "function",
         },
       ],
       messages: [
@@ -69,15 +74,15 @@ export default ({ apiKey }: Options) => {
         { role: "user", content: code },
       ],
     });
-    const data = chatCompletion.data.choices[0];
+    const data = chatCompletion.choices[0];
     console.log(data);
-    
-    if (data.finish_reason !== "function_call") return [];
+
+    if (!data.message.tool_calls) return [];
 
     const {
       variablesAndFunctionsToRename,
     }: { variablesAndFunctionsToRename: Rename[] } = JSON.parse(
-      fixPerhapsBrokenResponse(data.message?.function_call?.arguments!)
+      fixPerhapsBrokenResponse(data.message?.tool_calls[0].function.arguments!),
     );
 
     return variablesAndFunctionsToRename;

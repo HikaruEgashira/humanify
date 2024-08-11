@@ -70,7 +70,7 @@ https://openai.com/.
 
 There are several ways to provide the API key to the tool:
 ```shell
-OPENAI_TOKEN=your-token bunx @hikae/humanify -o deobfuscated.js obfuscated-file.js
+OPENAI_API_KEY=your-token bunx @hikae/humanify -o deobfuscated.js obfuscated-file.js
 
 bunx @hikae/humanify --key="your-token" -o deobfuscated.js obfuscated-file.js
 ```

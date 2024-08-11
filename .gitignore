@@ -4,3 +4,4 @@ example-*
 __pycache__
 node_modules
 out
+dist

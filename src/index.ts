@@ -6,16 +6,14 @@ import humanify from "./humanify.js";
 import yargs from "yargs/yargs";
 import { ensureFileExists } from "./fs-utils.js";
 import { env } from "./env.js";
-import { nop } from "./plugin-utils.js";
-import fixShadowing from "./fix-shadowing.js";
 import { webcrack } from "./webcrack.js";
 
 const argv = yargs(process.argv.slice(2))
   .example(
     "npm start -o example-formatted.js example.js",
-    "Format example.js and save to example-formatted.js"
+    "Format example.js and save to example-formatted.js",
   )
-  .scriptName("npm start --")
+  .scriptName("@hikae/humanify")
   .command("<file>", "File to format")
   .options({
     output: {
@@ -27,7 +25,8 @@ const argv = yargs(process.argv.slice(2))
     key: {
       type: "string",
       alias: "openai-key",
-      description: "OpenAI key (defaults to OPENAI_TOKEN environment variable)",
+      description:
+        "OpenAI key (defaults to OPENAI_API_KEY environment variable)",
     },
   })
   .demandCommand(1)
@@ -42,7 +41,7 @@ const bundledCode = await fs.readFile(filename, "utf-8");
 
 const PLUGINS = [
   humanify,
-  openai({ apiKey: argv.key ?? env("OPENAI_TOKEN") }),
+  openai({ apiKey: argv.key ?? env("OPENAI_API_KEY") }),
   prettier,
 ];
 
@@ -55,7 +54,7 @@ for (const file of extractedFiles) {
   const code = await fs.readFile(file.path, "utf-8");
   const formattedCode = await PLUGINS.reduce(
     (p, next) => p.then(next),
-    Promise.resolve(code)
+    Promise.resolve(code),
   );
 
   await fs.writeFile(file.path, formattedCode);
