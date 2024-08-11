@@ -1,6 +1,6 @@
 {
   "name": "@hikae/humanify",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "description": "",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
@@ -38,11 +38,11 @@
     "tsx": "^4.17.0",
     "typescript": "^5.5.4",
     "webcrack": "^2.14.0",
-    "yargs": "^17.7.2"
+    "yargs": "^17.7.2",
+    "@types/prettier": "^3.0.0",
+    "@types/yargs": "^17.0.33"
   },
   "devDependencies": {
-    "@types/prettier": "^3.0.0",
-    "@types/yargs": "^17.0.33",
     "pkgroll": "^2.4.2"
   }
 }

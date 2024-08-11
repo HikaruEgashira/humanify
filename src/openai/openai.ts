@@ -75,7 +75,6 @@ export default ({ apiKey }: Options) => {
       ],
     });
     const data = chatCompletion.choices[0];
-    console.log(data);
 
     if (!data.message.tool_calls) return [];
 

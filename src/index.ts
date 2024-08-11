@@ -54,9 +54,11 @@ const PLUGINS = [
 const extractedFiles = await webcrack(bundledCode, argv.output);
 
 for (const file of extractedFiles) {
-  if (file.path.endsWith("deobfuscated.js")) continue;
-
   console.log(`deobfuscating: ${file.path}`);
+  if (file.path.endsWith("deobfuscated.js")) {
+    console.warn("This process may take some time.");
+  }
+
   const code = await fs.readFile(file.path, "utf-8");
   const formattedCode = await PLUGINS.reduce(
     (p, next) => p.then(next),
