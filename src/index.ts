@@ -37,6 +37,12 @@ const filename = argv._[0] as string;
 
 await ensureFileExists(filename);
 
+const stats = await fs.stat(filename);
+if (stats.isDirectory()) {
+  throw new Error(
+    `Expected a file, but got a directory: ${filename}. Please provide a file.`,
+  );
+}
 const bundledCode = await fs.readFile(filename, "utf-8");
 
 const PLUGINS = [
